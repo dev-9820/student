@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            padding-top: 60px; /* Space for fixed header */
+        }
+
+        .audio-section {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-top: 2rem;
+            grid-column: span 2;
+        }
+
+        .audio-section h2 {
+            color: #333;
+            margin-bottom: 1rem;
+        }
+
+        .audio-player {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .audio-player audio {
+            width: 100%;
+            max-width: 500px;
+        }
+
+        /* News Ticker */
+        .news-ticker {
+            background-color: #1a73e8;
+            color: white;
+            padding: 0.75rem 0;
+            overflow: hidden;
+            position: relative;
+            white-space: nowrap;
+        }
+
+        .ticker-content {
+            display: inline-block;
+            animation: ticker 20s linear infinite;
+            padding-left: 100%;
+        }
+
+        @keyframes ticker {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+
+        /* Dashboard Layout */
+        .dashboard {
+            display: block;
+        }
+
+        /* Header */
+        .dashboard-header {
+            background-color: #1a73e8;
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+        }
+
+        /* Main Dashboard Container */
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            padding: 2rem;
+            margin-top: 1rem;
+        }
+
+        /* Updates Section */
+        .updates-section {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .updates-section h2 {
+            color: #333;
+            margin-bottom: 1rem;
+            position: sticky;
+            top: 0;
+            background: white;
+            padding: 0.5rem 0;
+        }
+
+        .update-item {
+            padding: 1rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .update-item:last-child {
+            border-bottom: none;
+        }
+
+        .update-item h3 {
+            color: #1a73e8;
+            margin-bottom: 0.5rem;
+        }
+
+        .update-item p {
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .update-date {
+            color: #999;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+        }
+
+        /* Media Section */
+        .media-section {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .media-container {
+            width: 100%;
+            position: relative;
+            height: 300px;
+            overflow: hidden;
+        }
+
+        .media-item {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 4px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            transition: opacity 1s ease;
+        }
+
+        .media-item.active {
+            opacity: 1;
+        }
+
+        .media-caption {
+            margin-top: 1rem;
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            text-align: center;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .dashboard-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Dashboard -->
+    <div class="dashboard" id="dashboard">
+        <!-- Header -->
+        <div class="dashboard-header">
+            <h1>Student Dashboard</h1>
+        </div>
+
+        <!-- News Ticker -->
+        <div class="news-ticker">
+            <div class="ticker-content" id="tickerContent">Loading news...</div>
+        </div>
+
+        <!-- Main Dashboard Container -->
+        <div class="dashboard-container">
+            <!-- Updates Section -->
+            <div class="updates-section">
+                <h2>Important Updates</h2>
+                <div id="updatesList">Loading updates...</div>
+            </div>
+
+            <!-- Media Section -->
+            <div class="media-section">
+                <div class="media-container" id="mediaContainer">
+                    <!-- Media items will be inserted here -->
+                </div>
+                <p class="media-caption">Campus News and Updates</p>
+            </div>
+
+            <div class="audio-section">
+                <h2>Campus Audio Announcements</h2>
+                <div id="audioPlayer" class="audio-player">
+                    <!-- Audio player will be added here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <audio id="notificationSound" src="buzzer.mp3" preload="auto"></audio>
+    <script>
+        // DOM Elements
+        const tickerContent = document.getElementById('tickerContent');
+        const updatesList = document.getElementById('updatesList');
+        const mediaContainer = document.getElementById('mediaContainer');
+        const notificationSound = document.getElementById('notificationSound');
+        
+        // Store previous updates length for comparison
+        let previousUpdatesLength = 0;
+        let currentMediaIndex = 0;
+        let mediaRotationInterval;
+        
+        // Function to rotate media
+        function rotateMedia() {
+            const mediaItems = document.querySelectorAll('.media-item');
+            if (mediaItems.length === 0) return;
+            
+            // Hide all media items
+            mediaItems.forEach(item => item.classList.remove('active'));
+            
+            // Show the current one
+            mediaItems[currentMediaIndex].classList.add('active');
+            
+            // Update index for next rotation
+            currentMediaIndex = (currentMediaIndex + 1) % mediaItems.length;
+        }
+        
+        // Start media rotation
+        function startMediaRotation() {
+            // Stop any existing interval
+            if (mediaRotationInterval) {
+                clearInterval(mediaRotationInterval);
+            }
+            
+            // Initial show
+            rotateMedia();
+            
+            // Set interval for rotation - every 30 seconds
+            mediaRotationInterval = setInterval(rotateMedia, 30000);
+        }
+        
+        // Render news ticker content
+        function renderNewsTicker() {
+            const newsArray = JSON.parse(localStorage.getItem('newsArray') || '[]');
+            
+            // Filter out expired news
+            const activeNews = newsArray.filter(item => new Date(item.expiry) > new Date());
+            
+            if (activeNews.length > 0) {
+                // Join all news items with a separator
+                tickerContent.textContent = activeNews.map(item => item.content).join(' • ');
+            } else {
+                tickerContent.textContent = 'Welcome to the Student Dashboard';
+            }
+        }
+        
+        // Check for new content and updates
+        function checkForUpdates() {
+            // Render news ticker
+            renderNewsTicker();
+            
+            // Check for updates and handle notifications
+            const currentUpdates = JSON.parse(localStorage.getItem('dashboardUpdates') || '[]');
+            
+            // Filter out expired updates
+            const activeUpdates = currentUpdates.filter(update => 
+                new Date(update.expiry || '2099-12-31') > new Date()
+            );
+            
+            // Play sound if there are new updates that require notification
+            const newUpdates = activeUpdates.length - previousUpdatesLength;
+            if (newUpdates > 0) {
+                // Check if any of the new updates have notification enabled
+                const shouldNotify = activeUpdates
+                    .slice(0, newUpdates)
+                    .some(update => update.notify);
+                
+                if (shouldNotify) {
+                    notificationSound.play().catch(error => {
+                        console.error('Error playing notification:', error);
+                    });
+                }
+            }
+            
+            // Update the previous length
+            previousUpdatesLength = activeUpdates.length;
+            
+            // Render updates
+            renderUpdates(activeUpdates);
+            
+            // Handle media
+            renderMedia();
+            
+            // Check for audio
+            renderAudio();
+        }
+        
+        // Render media to the dashboard
+        function renderMedia() {
+            const mediaArray = JSON.parse(localStorage.getItem('dashboardMediaArray') || '[]');
+            
+            // Filter out expired media
+            const activeMedia = mediaArray.filter(item => new Date(item.expiry) > new Date());
+            
+            // Reset container
+            mediaContainer.innerHTML = '';
+            
+            if (activeMedia.length > 0) {
+                activeMedia.forEach((item, index) => {
+                    const mediaElement = document.createElement(item.type === 'video' ? 'video' : 'img');
+                    mediaElement.src = item.src;
+                    mediaElement.className = 'media-item';
+                    
+                    // Add controls for video
+                    if (item.type === 'video') {
+                        mediaElement.controls = true;
+                        mediaElement.autoplay = false;
+                    }
+                    
+                    mediaContainer.appendChild(mediaElement);
+                });
+                
+                // Start the rotation
+                startMediaRotation();
+            } else {
+                const placeholderImg = document.createElement('img');
+                placeholderImg.src = '/api/placeholder/800/450';
+                placeholderImg.alt = 'No media available';
+                placeholderImg.className = 'media-item active';
+                mediaContainer.appendChild(placeholderImg);
+            }
+        }
+        
+        // Render audio player
+        function renderAudio() {
+            const audioPlayer = document.getElementById('audioPlayer');
+            const audioData = JSON.parse(localStorage.getItem('dashboardAudio') || 'null');
+            
+            if (audioData && new Date(audioData.expiry) > new Date()) {
+                audioPlayer.innerHTML = `
+                    <audio controls>
+                        <source src="${audioData.src}" type="audio/mpeg">
+                        Your browser does not support the audio element.
+                    </audio>
+                `;
+            } else {
+                audioPlayer.innerHTML = '<p>No audio announcements available</p>';
+            }
+        }
+
+        // Render updates to the dashboard
+        function renderUpdates(updates) {
+            if (updates.length === 0) {
+                updatesList.innerHTML = '<p>No updates available</p>';
+                return;
+            }
+            
+            updatesList.innerHTML = updates.map(update => `
+                <div class="update-item">
+                    <h3>${update.title}</h3>
+                    <p>${update.content}</p>
+                    <div class="update-date">
+                        ${new Date(update.date).toLocaleDateString()}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Initial check and set interval
+        checkForUpdates();
+        setInterval(checkForUpdates, 10000);
+    </script>
+</body>
+</html>
